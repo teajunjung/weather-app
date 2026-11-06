@@ -126,6 +126,123 @@ const COUNTRY_CITY_MAP = {
   }
 };
 
+// ========================================================
+// 나라별 지원 도시 전체 카탈로그 데이터
+// ========================================================
+const WORLD_CITIES_CATALOG = [
+  {
+    country: '대한민국',
+    flag: '🇰🇷',
+    id: 'kr',
+    cities: [
+      { name: '서울', lat: 37.5665, lon: 126.9780 },
+      { name: '부산', lat: 35.1796, lon: 129.0756 },
+      { name: '제주', lat: 33.4996, lon: 126.5312 },
+      { name: '서귀포', lat: 33.2541, lon: 126.5601 },
+      { name: '인천', lat: 37.4563, lon: 126.7052 },
+      { name: '대구', lat: 35.8714, lon: 128.6014 },
+      { name: '대전', lat: 36.3504, lon: 127.3845 },
+      { name: '광주', lat: 35.1595, lon: 126.8526 },
+      { name: '울산', lat: 35.5384, lon: 129.3114 },
+      { name: '세종', lat: 36.4800, lon: 127.2890 },
+      { name: '수원', lat: 37.2636, lon: 127.0286 },
+      { name: '성남', lat: 37.4200, lon: 127.1265 },
+      { name: '고양', lat: 37.6584, lon: 126.8320 },
+      { name: '용인', lat: 37.2411, lon: 127.1776 },
+      { name: '춘천', lat: 37.8813, lon: 127.7298 },
+      { name: '강릉', lat: 37.7519, lon: 128.8761 },
+      { name: '원주', lat: 37.3422, lon: 127.9202 },
+      { name: '청주', lat: 36.6424, lon: 127.4890 },
+      { name: '천안', lat: 36.8151, lon: 127.1139 },
+      { name: '전주', lat: 35.8242, lon: 127.1480 },
+      { name: '군산', lat: 35.9676, lon: 126.7366 },
+      { name: '여수', lat: 34.7604, lon: 127.6622 },
+      { name: '순천', lat: 34.9506, lon: 127.4872 },
+      { name: '포항', lat: 36.0190, lon: 129.3435 },
+      { name: '창원', lat: 35.2280, lon: 128.6811 }
+    ]
+  },
+  {
+    country: '일본',
+    flag: '🇯🇵',
+    id: 'jp',
+    cities: [
+      { name: '도쿄', lat: 35.6762, lon: 139.6503 },
+      { name: '오사카', lat: 34.6937, lon: 135.5023 },
+      { name: '후쿠오카', lat: 33.5904, lon: 130.4017 },
+      { name: '삿포로', lat: 43.0618, lon: 141.3545 },
+      { name: '교토', lat: 35.0116, lon: 135.7681 },
+      { name: '나고야', lat: 35.1815, lon: 136.9066 },
+      { name: '오키나와(나하)', lat: 26.2124, lon: 127.6809 }
+    ]
+  },
+  {
+    country: '미국',
+    flag: '🇺🇸',
+    id: 'us',
+    cities: [
+      { name: '뉴욕', lat: 40.7128, lon: -74.0060 },
+      { name: '로스앤젤레스', lat: 34.0522, lon: -118.2437 },
+      { name: '샌프란시스코', lat: 37.7749, lon: -122.4194 },
+      { name: '하와이(호놀룰루)', lat: 21.3069, lon: -157.8583 },
+      { name: '시애틀', lat: 47.6062, lon: -122.3321 },
+      { name: '시카고', lat: 41.8781, lon: -87.6298 },
+      { name: '라스베이거스', lat: 36.1699, lon: -115.1398 },
+      { name: '워싱턴 DC', lat: 38.9072, lon: -77.0369 },
+      { name: '보스턴', lat: 42.3601, lon: -71.0589 }
+    ]
+  },
+  {
+    country: '영국 & 프랑스',
+    flag: '🇬🇧🇫🇷',
+    id: 'gb',
+    cities: [
+      { name: '런던', lat: 51.5074, lon: -0.1278 },
+      { name: '맨체스터', lat: 53.4808, lon: -2.2426 },
+      { name: '에든버러', lat: 55.9533, lon: -3.1883 },
+      { name: '파리', lat: 48.8566, lon: 2.3522 },
+      { name: '니스', lat: 43.7102, lon: 7.2620 },
+      { name: '리옹', lat: 45.7640, lon: 4.8357 }
+    ]
+  },
+  {
+    country: '유럽 기타 (독일/이탈리아/스페인/스위스)',
+    flag: '🇪🇺',
+    id: 'etc',
+    cities: [
+      { name: '로마', lat: 41.9028, lon: 12.4964 },
+      { name: '밀라노', lat: 45.4642, lon: 9.1900 },
+      { name: '베네치아', lat: 45.4408, lon: 12.3155 },
+      { name: '바르셀로나', lat: 41.3879, lon: 2.1699 },
+      { name: '마드리드', lat: 40.4168, lon: -3.7038 },
+      { name: '베를린', lat: 52.5200, lon: 13.4050 },
+      { name: '뮌헨', lat: 48.1351, lon: 11.5820 },
+      { name: '프랑크푸르트', lat: 50.1109, lon: 8.6821 },
+      { name: '취리히', lat: 47.3769, lon: 8.5417 },
+      { name: '프라하', lat: 50.0755, lon: 14.4378 },
+      { name: '비엔나', lat: 48.2082, lon: 16.3738 }
+    ]
+  },
+  {
+    country: '아시아 & 대양주 (동남아/대만/호주 등)',
+    flag: '🌏',
+    id: 'etc',
+    cities: [
+      { name: '방콕', lat: 13.7563, lon: 100.5018 },
+      { name: '다낭', lat: 16.0544, lon: 108.2022 },
+      { name: '하노이', lat: 21.0285, lon: 105.8542 },
+      { name: '호치민', lat: 10.8231, lon: 106.6297 },
+      { name: '싱가포르', lat: 1.3521, lon: 103.8198 },
+      { name: '타이베이', lat: 25.0330, lon: 121.5654 },
+      { name: '발리(덴파사르)', lat: -8.6705, lon: 115.2126 },
+      { name: '세부', lat: 10.3157, lon: 123.8854 },
+      { name: '시드니', lat: -33.8688, lon: 151.2093 },
+      { name: '멜버른', lat: -37.8136, lon: 144.9631 },
+      { name: '괌', lat: 13.4443, lon: 144.7937 }
+    ]
+  }
+];
+
 // DOM 요소 캐싱
 const DOM = {
   wallpaperBg: document.getElementById('wallpaper-bg'),
@@ -164,7 +281,13 @@ const DOM = {
   
   // 토스트
   toast: document.getElementById('toast'),
-  toastMessage: document.getElementById('toast-message')
+  toastMessage: document.getElementById('toast-message'),
+
+  // 도시 목록 모달 UI
+  cityCatalogBtn: document.getElementById('city-catalog-btn'),
+  cityModalOverlay: document.getElementById('city-modal-overlay'),
+  closeModalBtn: document.getElementById('close-modal-btn'),
+  modalCatalogContent: document.getElementById('modal-catalog-content')
 };
 
 // ========================================================
@@ -779,6 +902,101 @@ DOM.geoBtn.addEventListener('click', () => {
 });
 
 // ========================================================
+// 나라별 도시 전체 카탈로그 모달 로직
+// ========================================================
+
+/**
+ * 나라별 도시 전체 카탈로그 모달 렌더링
+ */
+function renderWorldCitiesCatalog() {
+  if (!DOM.modalCatalogContent) return;
+
+  const html = WORLD_CITIES_CATALOG.map(section => {
+    const cityButtons = section.cities.map(c => `
+      <button class="catalog-city-chip" 
+              data-name="${c.name}" 
+              data-country="${section.country}"
+              data-country-id="${section.id}"
+              data-lat="${c.lat}" 
+              data-lon="${c.lon}">
+        ${c.name}
+      </button>
+    `).join('');
+
+    return `
+      <div class="country-catalog-card">
+        <div class="country-card-header">
+          <div class="country-card-title">
+            <span class="country-flag">${section.flag}</span>
+            <span>${section.country}</span>
+          </div>
+          <span class="city-count-badge">${section.cities.length}개 도시</span>
+        </div>
+        <div class="country-cities-grid">
+          ${cityButtons}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  DOM.modalCatalogContent.innerHTML = html;
+}
+
+/**
+ * 모달 열기
+ */
+function openCitiesModal() {
+  renderWorldCitiesCatalog();
+  DOM.cityModalOverlay.classList.remove('hidden');
+}
+
+/**
+ * 모달 닫기
+ */
+function closeCitiesModal() {
+  DOM.cityModalOverlay.classList.add('hidden');
+}
+
+// 모달 트리거 및 닫기 이벤트 리스너 바인딩
+if (DOM.cityCatalogBtn) {
+  DOM.cityCatalogBtn.addEventListener('click', openCitiesModal);
+}
+if (DOM.closeModalBtn) {
+  DOM.closeModalBtn.addEventListener('click', closeCitiesModal);
+}
+if (DOM.cityModalOverlay) {
+  DOM.cityModalOverlay.addEventListener('click', (e) => {
+    if (e.target === DOM.cityModalOverlay) closeCitiesModal();
+  });
+}
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && DOM.cityModalOverlay && !DOM.cityModalOverlay.classList.contains('hidden')) {
+    closeCitiesModal();
+  }
+});
+
+// 모달 내 도시 칩 클릭 시 해당 도시 날씨로 즉시 이동
+if (DOM.modalCatalogContent) {
+  DOM.modalCatalogContent.addEventListener('click', (e) => {
+    const chip = e.target.closest('.catalog-city-chip');
+    if (!chip) return;
+
+    const { lat, lon, name, country, countryId } = chip.dataset;
+
+    // 상단 2단 탭도 해당 국가 및 도시로 동기화
+    if (countryId && COUNTRY_CITY_MAP[countryId]) {
+      document.querySelectorAll('.country-tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.country === countryId);
+      });
+      renderCityChips(countryId, name);
+    }
+
+    closeCitiesModal();
+    loadWeather(parseFloat(lat), parseFloat(lon), name, country);
+  });
+}
+
+// ========================================================
 // 초기화 실행
 // ========================================================
 async function initApp() {
@@ -800,9 +1018,6 @@ async function initApp() {
     state.currentLocation.country
   );
 }
-
-// DOM 준비 완료 시 시작
-window.addEventListener('DOMContentLoaded', initApp);
 
 // DOM 준비 완료 시 시작
 window.addEventListener('DOMContentLoaded', initApp);
