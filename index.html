@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>웨더나우 (WeatherNow) - 실시간 날씨 정보</title>
+  <!-- Google Fonts & Pretendard -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="theme-clear-day">
+  <!-- 실사 고화질 날씨 배경화면 레이어 -->
+  <div class="wallpaper-bg" id="wallpaper-bg"></div>
+  <div class="background-overlay"></div>
+  
+  <!-- 날씨 라이브 애니메이션 캔버스 (비, 눈, 햇살, 별빛, 번개) -->
+  <canvas id="weather-canvas" class="weather-canvas"></canvas>
+
+  <div class="app-container">
+    <!-- 상단 헤더 & 검색 바 -->
+    <header class="header">
+      <div class="brand">
+        <i data-lucide="cloud-sun" class="brand-icon"></i>
+        <h1 class="brand-title">WeatherNow</h1>
+      </div>
+
+      <div class="search-section">
+        <form id="search-form" class="search-form">
+          <i data-lucide="search" class="search-icon"></i>
+          <input 
+            type="text" 
+            id="search-input" 
+            placeholder="도시명을 입력하세요 (예: 서울, 제주, 도쿄, 파리...)" 
+            autocomplete="off"
+          />
+          <button type="button" id="clear-search-btn" class="icon-btn clear-btn hidden" title="검색어 지우기">
+            <i data-lucide="x"></i>
+          </button>
+        </form>
+        <!-- 검색 추천 / 자동완성 드롭다운 -->
+        <ul id="search-results" class="search-results-dropdown hidden"></ul>
+      </div>
+
+      <div class="header-actions">
+        <!-- 현재 위치 버튼 -->
+        <button id="geo-btn" class="action-btn" title="현재 내 위치로 이동">
+          <i data-lucide="crosshair"></i>
+          <span class="btn-text">내 위치</span>
+        </button>
+        <!-- 단위 변경 버튼 (섭씨 / 화씨) -->
+        <button id="unit-toggle-btn" class="action-btn unit-btn" title="온도 단위 변경">
+          <span id="unit-display">°C</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- 국가 및 도시 선택 섹션 (2단 구조: 국가 탭 -> 하위 도시 칩) -->
+    <section class="location-tabs-section">
+      <!-- 1단: 국가 선택 탭 -->
+      <div class="country-tabs-scroll" id="country-tabs">
+        <button class="country-tab active" data-country="kr">🇰🇷 대한민국</button>
+        <button class="country-tab" data-country="jp">🇯🇵 일본</button>
+        <button class="country-tab" data-country="us">🇺🇸 미국</button>
+        <button class="country-tab" data-country="gb">🇬🇧 영국</button>
+        <button class="country-tab" data-country="fr">🇫🇷 프랑스</button>
+        <button class="country-tab" data-country="etc">🌏 글로벌/동남아</button>
+      </div>
+
+      <!-- 2단: 선택된 국가의 도시 칩 목록 (동적 렌더링) -->
+      <div class="quick-cities-scroll" id="quick-cities"></div>
+    </section>
+
+    <!-- 메인 대시보드 레이아웃 (첫 화면에 모든 정보를 한눈에!) -->
+    <main class="dashboard-layout">
+      
+      <!-- 상단 영역: 현재 날씨 요약 + 24시간 시간대별 날씨 예보 -->
+      <section class="top-row">
+        <!-- 1. 현재 날씨 히어로 카드 -->
+        <div class="current-hero-card glass-panel" id="current-weather">
+          <div class="hero-top-info">
+            <div class="location-info">
+              <h2 id="current-city" class="city-name">서울</h2>
+              <p id="current-country" class="country-name">대한민국</p>
+            </div>
+            <span id="update-time" class="update-badge">업데이트 방금 전</span>
+          </div>
+
+          <div class="hero-body">
+            <div class="weather-visual">
+              <div id="weather-icon-wrapper" class="icon-large-container">
+                <i data-lucide="sun" id="main-weather-icon" class="main-weather-icon"></i>
+              </div>
+              <p id="weather-desc" class="weather-description">맑음</p>
+            </div>
+
+            <div class="temperature-display">
+              <div class="main-temp-wrapper">
+                <span id="current-temp" class="main-temp">--</span>
+                <span class="temp-unit">°</span>
+              </div>
+              <div class="temp-sub-info">
+                <div class="temp-range">
+                  <span>최저 <strong id="temp-min">--°</strong></span>
+                  <span class="divider">/</span>
+                  <span>최고 <strong id="temp-max">--°</strong></span>
+                </div>
+                <p class="apparent-temp">체감 <span id="apparent-temp">--°</span></p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. 첫 화면 24시간 시간별 날씨 예보 카드 (24시간 한눈에 보기) -->
+        <div class="hourly-card glass-panel">
+          <div class="section-title-bar">
+            <div class="title-with-icon">
+              <i data-lucide="clock"></i>
+              <h3>24시간 시간대별 날씨</h3>
+            </div>
+            <span class="timeline-summary" id="timeline-summary">24시간 연속 한눈에 보기</span>
+          </div>
+          <div class="hourly-timeline-wrapper">
+            <div class="hourly-timeline-grid" id="hourly-forecast">
+              <div class="loading-spinner">시간별 예보를 불러오는 중...</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 하단 영역: 상세 기상 지표 + 7일간 주간 예보 -->
+      <section class="bottom-row">
+        <!-- 3. 실시간 상세 기상 지표 -->
+        <div class="metrics-card glass-panel">
+          <div class="section-title-bar">
+            <div class="title-with-icon">
+              <i data-lucide="bar-chart-2"></i>
+              <h3>실시간 상세 지표</h3>
+            </div>
+          </div>
+          <div class="metrics-grid">
+            <div class="metric-item">
+              <div class="metric-icon-box"><i data-lucide="droplets"></i></div>
+              <div class="metric-meta">
+                <span class="metric-label">습도</span>
+                <span id="humidity-val" class="metric-value">--%</span>
+              </div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-icon-box"><i data-lucide="wind"></i></div>
+              <div class="metric-meta">
+                <span class="metric-label">풍속</span>
+                <span id="wind-val" class="metric-value">-- m/s</span>
+              </div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-icon-box"><i data-lucide="cloud-rain"></i></div>
+              <div class="metric-meta">
+                <span class="metric-label">강수확률</span>
+                <span id="precip-val" class="metric-value">--%</span>
+              </div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-icon-box"><i data-lucide="sun"></i></div>
+              <div class="metric-meta">
+                <span class="metric-label">자외선(UV)</span>
+                <span id="uv-val" class="metric-value">--</span>
+              </div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-icon-box"><i data-lucide="gauge"></i></div>
+              <div class="metric-meta">
+                <span class="metric-label">대기압</span>
+                <span id="pressure-val" class="metric-value">-- hPa</span>
+              </div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-icon-box"><i data-lucide="sunset"></i></div>
+              <div class="metric-meta">
+                <span class="metric-label">일출 / 일몰</span>
+                <span id="sun-times-val" class="metric-value">-- / --</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. 7일간 주간 예보 (슬림 & 컴팩트) -->
+        <div class="daily-card glass-panel">
+          <div class="section-title-bar">
+            <div class="title-with-icon">
+              <i data-lucide="calendar"></i>
+              <h3>7일간 주간 예보</h3>
+            </div>
+          </div>
+          <div class="daily-list" id="daily-forecast">
+            <div class="loading-spinner">주간 예보를 불러오는 중...</div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- 푸터 -->
+    <footer class="footer">
+      <div class="footer-content">
+        <p>무료 공개 날씨 API <strong>Open-Meteo</strong> 기반 실시간 날씨 서비스</p>
+      </div>
+    </footer>
+  </div>
+
+  <!-- 에러 토스트 알림창 -->
+  <div id="toast" class="toast hidden">
+    <i data-lucide="alert-circle" class="toast-icon"></i>
+    <span id="toast-message" class="toast-message">알림 내용</span>
+  </div>
+
+  <!-- 스크립트 연결 -->
+  <script src="weather-codes.js"></script>
+  <script src="weather-effects.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
