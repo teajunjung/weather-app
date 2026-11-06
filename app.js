@@ -12,6 +12,7 @@ const state = {
     lat: 37.5665,
     lon: 126.9780
   },
+  currentMapRegion: 'kr', // 'kr' | 'jp' | 'us' | 'eu' | 'asia'
   weatherData: null,
   searchDebounceTimer: null
 };
@@ -129,7 +130,7 @@ const WORLD_CITIES_CATALOG = [
   {
     country: '영국 & 프랑스',
     flag: '🇬🇧🇫🇷',
-    id: 'gb',
+    id: 'eu',
     cities: [
       { name: '런던', lat: 51.5074, lon: -0.1278 },
       { name: '맨체스터', lat: 53.4808, lon: -2.2426 },
@@ -142,7 +143,7 @@ const WORLD_CITIES_CATALOG = [
   {
     country: '유럽 기타 (독일/이탈리아/스페인/스위스)',
     flag: '🇪🇺',
-    id: 'etc',
+    id: 'eu',
     cities: [
       { name: '로마', lat: 41.9028, lon: 12.4964 },
       { name: '밀라노', lat: 45.4642, lon: 9.1900 },
@@ -160,7 +161,7 @@ const WORLD_CITIES_CATALOG = [
   {
     country: '아시아 & 대양주 (동남아/대만/호주 등)',
     flag: '🌏',
-    id: 'etc',
+    id: 'asia',
     cities: [
       { name: '방콕', lat: 13.7563, lon: 100.5018 },
       { name: '다낭', lat: 16.0544, lon: 108.2022 },
@@ -177,32 +178,7 @@ const WORLD_CITIES_CATALOG = [
   }
 ];
 
-// ========================================================
-// 대한민국 인터랙티브 날씨 지도 거점 도시 목록 & 좌표 (%)
-// ========================================================
-const KOREA_MAP_CITIES = [
-  { name: '춘천', lat: 37.8813, lon: 127.7298, x: 52, y: 16 },
-  { name: '서울', lat: 37.5665, lon: 126.9780, x: 34, y: 20 },
-  { name: '인천', lat: 37.4563, lon: 126.7052, x: 22, y: 22 },
-  { name: '강릉', lat: 37.7519, lon: 128.8761, x: 74, y: 19 },
-  { name: '울릉/독도', lat: 37.4842, lon: 130.9057, x: 89, y: 24 },
-  { name: '수원', lat: 37.2636, lon: 127.0286, x: 35, y: 27 },
-  { name: '청주', lat: 36.6424, lon: 127.4890, x: 45, y: 35 },
-  { name: '안동', lat: 36.5684, lon: 128.7294, x: 66, y: 36 },
-  { name: '대전', lat: 36.3504, lon: 127.3845, x: 39, y: 42 },
-  { name: '포항', lat: 36.0190, lon: 129.3435, x: 81, y: 47 },
-  { name: '대구', lat: 35.8714, lon: 128.6014, x: 65, y: 49 },
-  { name: '전주', lat: 35.8242, lon: 127.1480, x: 34, y: 51 },
-  { name: '울산', lat: 35.5384, lon: 129.3114, x: 82, y: 57 },
-  { name: '창원', lat: 35.2280, lon: 128.6811, x: 63, y: 62 },
-  { name: '부산', lat: 35.1796, lon: 129.0756, x: 76, y: 64 },
-  { name: '광주', lat: 35.1595, lon: 126.8526, x: 28, y: 63 },
-  { name: '여수', lat: 34.7604, lon: 127.6622, x: 45, y: 71 },
-  { name: '목포', lat: 34.8118, lon: 126.3922, x: 19, y: 70 },
-  { name: '제주', lat: 33.4996, lon: 126.5312, x: 32, y: 90 }
-];
-
-let koreaMapWeatherData = {}; // 지도 거점 날씨 캐시
+let mapWeatherDataCache = {}; // 국가별 지도 거점 날씨 캐시: { [regionId]: { [cityName]: { temp, code } } }
 
 // DOM 요소 캐싱
 const DOM = {
@@ -214,6 +190,11 @@ const DOM = {
   geoBtn: document.getElementById('geo-btn'),
   unitToggleBtn: document.getElementById('unit-toggle-btn'),
   unitDisplay: document.getElementById('unit-display'),
+  
+  // 국가별 인터랙티브 지도 UI
+  mapTitle: document.getElementById('map-title'),
+  mapCountryPills: document.getElementById('map-country-pills'),
+  mapSvgWrapper: document.getElementById('map-svg-wrapper'),
   mapMarkersLayer: document.getElementById('map-markers-layer'),
   
   // 현재 날씨 UI
@@ -647,18 +628,67 @@ async function loadWeather(lat, lon, name = null, country = null) {
 }
 
 // ========================================================
-// 대한민국 인터랙티브 날씨 지도 로직
+// 다국가 인터랙티브 날씨 지도 로직 (대한민국, 일본, 미국, 유럽, 아시아)
 // ========================================================
 
 /**
- * 대한민국 지도 위의 거점 도시 마커들을 렌더링합니다.
+ * 지정된 국가/지역의 인터랙티브 SVG 지도 및 거점 도시 마커를 렌더링합니다.
  */
-function renderKoreaMapMarkers() {
+function renderRegionMap(regionId, targetCityName = null) {
+  if (typeof MAP_REGIONS === 'undefined' || !MAP_REGIONS[regionId]) {
+    regionId = 'kr';
+  }
+  state.currentMapRegion = regionId;
+  const region = MAP_REGIONS[regionId];
+
+  // 1. 지도 제목 및 국기 갱신
+  if (DOM.mapTitle) {
+    DOM.mapTitle.textContent = `${region.flag} ${region.name} 날씨 지도`;
+  }
+
+  // 2. 상단 국가 선택 탭 활성화 상태 동기화
+  if (DOM.mapCountryPills) {
+    const pillButtons = DOM.mapCountryPills.querySelectorAll('.map-pill-btn');
+    pillButtons.forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.region === regionId);
+    });
+  }
+
+  // 3. SVG 벡터 지도 렌더링
+  if (DOM.mapSvgWrapper) {
+    DOM.mapSvgWrapper.innerHTML = `
+      <svg class="korea-svg-map" viewBox="${region.viewBox}" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="mapGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="rgba(30, 41, 59, 0.75)" />
+            <stop offset="100%" stop-color="rgba(15, 23, 42, 0.9)" />
+          </linearGradient>
+        </defs>
+        ${region.svgPath}
+      </svg>
+    `;
+  }
+
+  // 4. 거점 도시 마커 렌더링
+  renderRegionMapMarkers(regionId, targetCityName);
+
+  // 5. 해당 국가 거점 도시들의 실시간 날씨 일괄 조회
+  fetchRegionMapWeatherData(regionId);
+}
+
+/**
+ * 특정 국가 지도의 거점 도시 마커들을 렌더링합니다.
+ */
+function renderRegionMapMarkers(regionId, activeCityName = null) {
   if (!DOM.mapMarkersLayer) return;
 
-  const html = KOREA_MAP_CITIES.map(city => {
-    const isActive = state.currentLocation.name === city.name;
-    const weather = koreaMapWeatherData[city.name];
+  const region = (typeof MAP_REGIONS !== 'undefined' && MAP_REGIONS[regionId]) ? MAP_REGIONS[regionId] : MAP_REGIONS.kr;
+  const regionCache = mapWeatherDataCache[regionId] || {};
+  const currentSelected = activeCityName || state.currentLocation.name;
+
+  const html = region.cities.map(city => {
+    const isActive = currentSelected === city.name;
+    const weather = regionCache[city.name];
     const tempText = weather ? `${formatTemp(weather.temp)}°` : '--°';
     const weatherInfo = weather ? getWeatherInfo(weather.code, 1) : { icon: 'sun', label: '맑음' };
 
@@ -669,6 +699,8 @@ function renderKoreaMapMarkers() {
               data-name="${city.name}" 
               data-lat="${city.lat}" 
               data-lon="${city.lon}"
+              data-country="${region.name}"
+              data-region="${regionId}"
               title="${city.name} (${tempText}, ${weatherInfo.label}) 클릭하여 날씨 보기">
         <span class="marker-name">${city.name}</span>
         <div class="marker-icon"><i data-lucide="${weatherInfo.icon}"></i></div>
@@ -684,6 +716,47 @@ function renderKoreaMapMarkers() {
 }
 
 /**
+ * 특정 국가 지도 위 거점 도시들의 실시간 날씨를 Open-Meteo 일괄 쿼리로 조회
+ */
+async function fetchRegionMapWeatherData(regionId) {
+  if (typeof MAP_REGIONS === 'undefined' || !MAP_REGIONS[regionId]) return;
+  const region = MAP_REGIONS[regionId];
+  if (!region.cities || region.cities.length === 0) return;
+
+  const lats = region.cities.map(c => c.lat).join(',');
+  const lons = region.cities.map(c => c.lon).join(',');
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&current=temperature_2m,weather_code`;
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return;
+    const dataList = await res.json();
+
+    if (!mapWeatherDataCache[regionId]) {
+      mapWeatherDataCache[regionId] = {};
+    }
+
+    if (Array.isArray(dataList)) {
+      dataList.forEach((data, index) => {
+        const city = region.cities[index];
+        if (city && data.current) {
+          mapWeatherDataCache[regionId][city.name] = {
+            temp: data.current.temperature_2m,
+            code: data.current.weather_code
+          };
+        }
+      });
+      // 현재 보고 있는 지도와 같으면 마커 온도/아이콘 즉시 갱신
+      if (state.currentMapRegion === regionId) {
+        renderRegionMapMarkers(regionId);
+      }
+    }
+  } catch (err) {
+    console.warn(`${region.name} 지도 날씨 일괄 로드 실패:`, err);
+  }
+}
+
+/**
  * 지도 위 활성화된 도시 마커 하이라이트 동기화
  */
 function updateActiveMapMarker(cityName) {
@@ -694,33 +767,26 @@ function updateActiveMapMarker(cityName) {
 }
 
 /**
- * 전국 19개 거점 도시의 실시간 날씨를 한 번에 일괄 조회하여 지도에 반영
+ * 국가 탭 직접 클릭 시 해당 국가 지도로 전환하고 대표 도시 날씨 로드
  */
-async function fetchKoreaMapWeatherData() {
-  const lats = KOREA_MAP_CITIES.map(c => c.lat).join(',');
-  const lons = KOREA_MAP_CITIES.map(c => c.lon).join(',');
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&current=temperature_2m,weather_code`;
+function switchMapRegion(regionId, targetCityName = null) {
+  if (typeof MAP_REGIONS === 'undefined' || !MAP_REGIONS[regionId]) return;
+  const region = MAP_REGIONS[regionId];
 
-  try {
-    const res = await fetch(url);
-    if (!res.ok) return;
-    const dataList = await res.json();
-    
-    if (Array.isArray(dataList)) {
-      dataList.forEach((data, index) => {
-        const city = KOREA_MAP_CITIES[index];
-        if (city && data.current) {
-          koreaMapWeatherData[city.name] = {
-            temp: data.current.temperature_2m,
-            code: data.current.weather_code
-          };
-        }
-      });
-      renderKoreaMapMarkers();
-    }
-  } catch (err) {
-    console.warn('전국 지도 날씨 일괄 로드 실패:', err);
-  }
+  // 각 국가별 대표 도시 매핑
+  const defaultCityMap = {
+    kr: '서울',
+    jp: '도쿄',
+    us: '뉴욕',
+    eu: '파리',
+    asia: '방콕'
+  };
+
+  const selectedName = targetCityName || defaultCityMap[regionId] || region.cities[0].name;
+  const targetCity = region.cities.find(c => c.name === selectedName) || region.cities[0];
+
+  renderRegionMap(regionId, targetCity.name);
+  loadWeather(targetCity.lat, targetCity.lon, targetCity.name, region.name);
 }
 
 // 지도 마커 클릭 이벤트 (클릭 시 해당 도시의 날씨 및 실사 배경 로드)
@@ -729,9 +795,21 @@ if (DOM.mapMarkersLayer) {
     const marker = e.target.closest('.map-marker');
     if (!marker) return;
 
-    const { name, lat, lon } = marker.dataset;
+    const { name, lat, lon, country } = marker.dataset;
     updateActiveMapMarker(name);
-    loadWeather(parseFloat(lat), parseFloat(lon), name, '대한민국');
+    loadWeather(parseFloat(lat), parseFloat(lon), name, country || '');
+  });
+}
+
+// 상단 국가 필 탭 클릭 이벤트
+if (DOM.mapCountryPills) {
+  DOM.mapCountryPills.addEventListener('click', (e) => {
+    const btn = e.target.closest('.map-pill-btn');
+    if (!btn) return;
+
+    const regionId = btn.dataset.region;
+    if (!regionId || regionId === state.currentMapRegion) return;
+    switchMapRegion(regionId);
   });
 }
 
@@ -824,6 +902,14 @@ function selectLocation(lat, lon, name, country) {
   // 활성 칩 해제
   document.querySelectorAll('.city-chip').forEach(c => c.classList.remove('active'));
 
+  // 검색/선택한 도시의 국가/지역 지도 자동 전환
+  const targetRegion = getRegionIdByCityName(name, country);
+  if (targetRegion && targetRegion !== state.currentMapRegion) {
+    renderRegionMap(targetRegion, name);
+  } else {
+    updateActiveMapMarker(name);
+  }
+
   loadWeather(lat, lon, name, country);
 }
 
@@ -854,7 +940,7 @@ DOM.unitToggleBtn.addEventListener('click', () => {
   localStorage.setItem('weather_unit', state.unit);
   DOM.unitDisplay.textContent = `°${state.unit}`;
   renderAll();
-  renderKoreaMapMarkers();
+  renderRegionMapMarkers(state.currentMapRegion);
 });
 
 /**
@@ -971,14 +1057,23 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-// 모달 내 도시 칩 클릭 시 해당 도시 날씨로 즉시 이동
+// 모달 내 도시 칩 클릭 시 해당 도시 국가 지도로 전환 및 날씨로 즉시 이동
 if (DOM.modalCatalogContent) {
   DOM.modalCatalogContent.addEventListener('click', (e) => {
     const chip = e.target.closest('.catalog-city-chip');
     if (!chip) return;
 
-    const { lat, lon, name, country } = chip.dataset;
+    const { lat, lon, name, country, countryId } = chip.dataset;
     closeCitiesModal();
+
+    // 사용자가 클릭한 도시의 국가/지역 판정 후 해당 국가 지도로 자동 전환
+    const targetRegion = countryId || (typeof getRegionIdByCityName === 'function' ? getRegionIdByCityName(name, country) : 'kr');
+    if (targetRegion && targetRegion !== state.currentMapRegion) {
+      renderRegionMap(targetRegion, name);
+    } else {
+      updateActiveMapMarker(name);
+    }
+
     loadWeather(parseFloat(lat), parseFloat(lon), name, country);
   });
 }
@@ -994,9 +1089,8 @@ async function initApp() {
     lucide.createIcons();
   }
 
-  // 대한민국 지도 거점 마커 초기 렌더링 & 전국 날씨 일괄 로드
-  renderKoreaMapMarkers();
-  fetchKoreaMapWeatherData();
+  // 초기 대한민국 지도 렌더링 & 거점 날씨 일괄 로드
+  renderRegionMap('kr', '서울');
 
   // 기본 도시(서울) 데이터 로드
   await loadWeather(
