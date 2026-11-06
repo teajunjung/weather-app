@@ -67,12 +67,84 @@
       </div>
     </header>
 
-    <!-- 메인 대시보드 레이아웃 (첫 화면에 모든 정보를 한눈에!) -->
-    <main class="dashboard-layout">
+    <!-- 메인 대시보드 레이아웃: 정면 좌측 대한민국 지도 + 우측 선택 도시 상세 날씨 -->
+    <main class="dashboard-map-layout">
       
-      <!-- 상단 영역: 현재 날씨 요약 + 24시간 시간대별 날씨 예보 -->
-      <section class="top-row">
-        <!-- 1. 현재 날씨 히어로 카드 -->
+      <!-- 좌측: 대한민국 실시간 날씨 지도 (정면 메인) -->
+      <section class="korea-map-card glass-panel">
+        <div class="map-card-header">
+          <div class="title-with-icon">
+            <i data-lucide="map-pin"></i>
+            <h3>대한민국 날씨 지도</h3>
+          </div>
+          <span class="map-badge" id="map-update-badge">실시간 관측</span>
+        </div>
+
+        <div class="map-container" id="korea-map-container">
+          <!-- 한반도 벡터 SVG 지도 -->
+          <svg class="korea-svg-map" viewBox="0 0 500 620" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="mapGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="rgba(30, 41, 59, 0.75)" />
+                <stop offset="100%" stop-color="rgba(15, 23, 42, 0.9)" />
+              </linearGradient>
+            </defs>
+
+            <!-- 한반도 남한 본토 지형 패스 -->
+            <path class="korea-land" d="M 125,50 
+              C 165,48 200,52 235,58 
+              C 265,65 305,75 340,95 
+              C 365,110 395,145 405,185 
+              C 410,215 412,250 415,290 
+              C 418,330 422,350 435,370 
+              C 442,382 445,395 435,410 
+              C 425,425 410,430 400,445 
+              C 390,460 380,480 365,490 
+              C 350,500 330,505 315,500 
+              C 300,495 285,505 270,510 
+              C 255,515 240,510 230,500 
+              C 220,490 205,505 190,505 
+              C 175,505 160,490 150,470 
+              C 140,450 145,435 155,420 
+              C 165,405 168,390 160,375 
+              C 150,360 135,365 125,350 
+              C 115,335 120,315 130,300 
+              C 140,285 135,270 120,260 
+              C 105,250 95,235 105,215 
+              C 115,195 130,190 135,175 
+              C 140,160 130,140 120,125 
+              C 110,110 108,85 115,65 Z" />
+
+            <!-- 주요 도 경계선 (은은한 점선) -->
+            <path class="korea-border" d="M 170,120 Q 230,135 280,115" />
+            <path class="korea-border" d="M 280,115 Q 310,190 320,270" />
+            <path class="korea-border" d="M 140,230 Q 220,240 270,225" />
+            <path class="korea-border" d="M 130,315 Q 230,325 320,270" />
+            <path class="korea-border" d="M 160,380 Q 250,390 330,380" />
+            <path class="korea-border" d="M 260,385 Q 285,440 295,505" />
+
+            <!-- 제주도 -->
+            <ellipse class="korea-island" cx="160" cy="565" rx="38" ry="20" />
+
+            <!-- 울릉도 & 독도 -->
+            <circle class="korea-island" cx="445" cy="155" r="8" />
+            <circle class="korea-island" cx="475" cy="165" r="5" />
+          </svg>
+
+          <!-- 인터랙티브 거점 도시 날씨 마커 오버레이 (JS로 동적 렌더링) -->
+          <div class="map-markers-layer" id="map-markers-layer"></div>
+        </div>
+
+        <div class="map-card-footer">
+          <i data-lucide="info"></i>
+          <span>지도 위의 도시를 클릭하면 해당 지역 날씨로 즉시 이동합니다.</span>
+        </div>
+      </section>
+
+      <!-- 우측: 선택된 도시의 실시간 상세 날씨 대시보드 -->
+      <section class="city-weather-panel">
+        
+        <!-- 상단: 현재 날씨 히어로 카드 -->
         <div class="current-hero-card glass-panel" id="current-weather">
           <div class="hero-top-info">
             <div class="location-info">
@@ -107,7 +179,7 @@
           </div>
         </div>
 
-        <!-- 2. 첫 화면 24시간 시간별 날씨 예보 카드 (24시간 한눈에 보기) -->
+        <!-- 중단: 24시간 시간별 날씨 예보 (스크롤 없는 24시간 한눈에 보기) -->
         <div class="hourly-card glass-panel">
           <div class="section-title-bar">
             <div class="title-with-icon">
@@ -122,76 +194,77 @@
             </div>
           </div>
         </div>
-      </section>
 
-      <!-- 하단 영역: 상세 기상 지표 + 7일간 주간 예보 -->
-      <section class="bottom-row">
-        <!-- 3. 실시간 상세 기상 지표 -->
-        <div class="metrics-card glass-panel">
-          <div class="section-title-bar">
-            <div class="title-with-icon">
-              <i data-lucide="bar-chart-2"></i>
-              <h3>실시간 상세 지표</h3>
+        <!-- 하단: 상세 기상 지표 + 7일간 주간 예보 (2분할) -->
+        <div class="weather-detail-row">
+          <!-- 실시간 상세 지표 -->
+          <div class="metrics-card glass-panel">
+            <div class="section-title-bar">
+              <div class="title-with-icon">
+                <i data-lucide="bar-chart-2"></i>
+                <h3>상세 기상 지표</h3>
+              </div>
+            </div>
+            <div class="metrics-grid">
+              <div class="metric-item">
+                <div class="metric-icon-box"><i data-lucide="droplets"></i></div>
+                <div class="metric-meta">
+                  <span class="metric-label">습도</span>
+                  <span id="humidity-val" class="metric-value">--%</span>
+                </div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-icon-box"><i data-lucide="wind"></i></div>
+                <div class="metric-meta">
+                  <span class="metric-label">풍속</span>
+                  <span id="wind-val" class="metric-value">-- m/s</span>
+                </div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-icon-box"><i data-lucide="cloud-rain"></i></div>
+                <div class="metric-meta">
+                  <span class="metric-label">강수확률</span>
+                  <span id="precip-val" class="metric-value">--%</span>
+                </div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-icon-box"><i data-lucide="sun"></i></div>
+                <div class="metric-meta">
+                  <span class="metric-label">자외선(UV)</span>
+                  <span id="uv-val" class="metric-value">--</span>
+                </div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-icon-box"><i data-lucide="gauge"></i></div>
+                <div class="metric-meta">
+                  <span class="metric-label">대기압</span>
+                  <span id="pressure-val" class="metric-value">-- hPa</span>
+                </div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-icon-box"><i data-lucide="sunset"></i></div>
+                <div class="metric-meta">
+                  <span class="metric-label">일출 / 일몰</span>
+                  <span id="sun-times-val" class="metric-value">-- / --</span>
+                </div>
+              </div>
             </div>
           </div>
-          <div class="metrics-grid">
-            <div class="metric-item">
-              <div class="metric-icon-box"><i data-lucide="droplets"></i></div>
-              <div class="metric-meta">
-                <span class="metric-label">습도</span>
-                <span id="humidity-val" class="metric-value">--%</span>
+
+          <!-- 7일간 주간 예보 -->
+          <div class="daily-card glass-panel">
+            <div class="section-title-bar">
+              <div class="title-with-icon">
+                <i data-lucide="calendar"></i>
+                <h3>7일간 주간 예보</h3>
               </div>
             </div>
-            <div class="metric-item">
-              <div class="metric-icon-box"><i data-lucide="wind"></i></div>
-              <div class="metric-meta">
-                <span class="metric-label">풍속</span>
-                <span id="wind-val" class="metric-value">-- m/s</span>
-              </div>
-            </div>
-            <div class="metric-item">
-              <div class="metric-icon-box"><i data-lucide="cloud-rain"></i></div>
-              <div class="metric-meta">
-                <span class="metric-label">강수확률</span>
-                <span id="precip-val" class="metric-value">--%</span>
-              </div>
-            </div>
-            <div class="metric-item">
-              <div class="metric-icon-box"><i data-lucide="sun"></i></div>
-              <div class="metric-meta">
-                <span class="metric-label">자외선(UV)</span>
-                <span id="uv-val" class="metric-value">--</span>
-              </div>
-            </div>
-            <div class="metric-item">
-              <div class="metric-icon-box"><i data-lucide="gauge"></i></div>
-              <div class="metric-meta">
-                <span class="metric-label">대기압</span>
-                <span id="pressure-val" class="metric-value">-- hPa</span>
-              </div>
-            </div>
-            <div class="metric-item">
-              <div class="metric-icon-box"><i data-lucide="sunset"></i></div>
-              <div class="metric-meta">
-                <span class="metric-label">일출 / 일몰</span>
-                <span id="sun-times-val" class="metric-value">-- / --</span>
-              </div>
+            <div class="daily-list" id="daily-forecast">
+              <div class="loading-spinner">주간 예보를 불러오는 중...</div>
             </div>
           </div>
         </div>
 
-        <!-- 4. 7일간 주간 예보 (슬림 & 컴팩트) -->
-        <div class="daily-card glass-panel">
-          <div class="section-title-bar">
-            <div class="title-with-icon">
-              <i data-lucide="calendar"></i>
-              <h3>7일간 주간 예보</h3>
-            </div>
-          </div>
-          <div class="daily-list" id="daily-forecast">
-            <div class="loading-spinner">주간 예보를 불러오는 중...</div>
-          </div>
-        </div>
       </section>
 
     </main>
