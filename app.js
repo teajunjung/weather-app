@@ -60,72 +60,6 @@ const POPULAR_CITIES = [
   { name: '시드니', country: '호주', lat: -33.8688, lon: 151.2093, en: 'Sydney' }
 ];
 
-// 국가 및 하위 도시 맵 데이터 (2단 탭 구조)
-const COUNTRY_CITY_MAP = {
-  kr: {
-    name: '대한민국',
-    cities: [
-      { name: '서울', lat: 37.5665, lon: 126.9780, country: '대한민국' },
-      { name: '부산', lat: 35.1796, lon: 129.0756, country: '대한민국' },
-      { name: '제주', lat: 33.4996, lon: 126.5312, country: '대한민국' },
-      { name: '인천', lat: 37.4563, lon: 126.7052, country: '대한민국' },
-      { name: '대구', lat: 35.8714, lon: 128.6014, country: '대한민국' },
-      { name: '대전', lat: 36.3504, lon: 127.3845, country: '대한민국' },
-      { name: '광주', lat: 35.1595, lon: 126.8526, country: '대한민국' },
-      { name: '강릉', lat: 37.7519, lon: 128.8761, country: '대한민국' }
-    ]
-  },
-  jp: {
-    name: '일본',
-    cities: [
-      { name: '도쿄', lat: 35.6762, lon: 139.6503, country: '일본' },
-      { name: '오사카', lat: 34.6937, lon: 135.5023, country: '일본' },
-      { name: '후쿠오카', lat: 33.5904, lon: 130.4017, country: '일본' },
-      { name: '삿포로', lat: 43.0618, lon: 141.3545, country: '일본' },
-      { name: '교토', lat: 35.0116, lon: 135.7681, country: '일본' }
-    ]
-  },
-  us: {
-    name: '미국',
-    cities: [
-      { name: '뉴욕', lat: 40.7128, lon: -74.0060, country: '미국' },
-      { name: '로스앤젤레스', lat: 34.0522, lon: -118.2437, country: '미국' },
-      { name: '샌프란시스코', lat: 37.7749, lon: -122.4194, country: '미국' },
-      { name: '하와이(호놀룰루)', lat: 21.3069, lon: -157.8583, country: '미국' },
-      { name: '시애틀', lat: 47.6062, lon: -122.3321, country: '미국' }
-    ]
-  },
-  gb: {
-    name: '영국',
-    cities: [
-      { name: '런던', lat: 51.5074, lon: -0.1278, country: '영국' },
-      { name: '맨체스터', lat: 53.4808, lon: -2.2426, country: '영국' },
-      { name: '에든버러', lat: 55.9533, lon: -3.1883, country: '영국' },
-      { name: '리버풀', lat: 53.4084, lon: -2.9916, country: '영국' }
-    ]
-  },
-  fr: {
-    name: '프랑스',
-    cities: [
-      { name: '파리', lat: 48.8566, lon: 2.3522, country: '프랑스' },
-      { name: '니스', lat: 43.7102, lon: 7.2620, country: '프랑스' },
-      { name: '리옹', lat: 45.7640, lon: 4.8357, country: '프랑스' },
-      { name: '마르세유', lat: 43.2965, lon: 5.3698, country: '프랑스' }
-    ]
-  },
-  etc: {
-    name: '글로벌/동남아',
-    cities: [
-      { name: '방콕', lat: 13.7563, lon: 100.5018, country: '태국' },
-      { name: '다낭', lat: 16.0544, lon: 108.2022, country: '베트남' },
-      { name: '싱가포르', lat: 1.3521, lon: 103.8198, country: '싱가포르' },
-      { name: '타이베이', lat: 25.0330, lon: 121.5654, country: '대만' },
-      { name: '시드니', lat: -33.8688, lon: 151.2093, country: '호주' },
-      { name: '로마', lat: 41.9028, lon: 12.4964, country: '이탈리아' }
-    ]
-  }
-};
-
 // ========================================================
 // 나라별 지원 도시 전체 카탈로그 데이터
 // ========================================================
@@ -253,8 +187,6 @@ const DOM = {
   geoBtn: document.getElementById('geo-btn'),
   unitToggleBtn: document.getElementById('unit-toggle-btn'),
   unitDisplay: document.getElementById('unit-display'),
-  countryTabs: document.getElementById('country-tabs'),
-  quickCities: document.getElementById('quick-cities'),
   
   // 현재 날씨 UI
   currentCity: document.getElementById('current-city'),
@@ -797,64 +729,6 @@ document.addEventListener('click', (e) => {
 });
 
 /**
- * 특정 국가의 하위 도시 칩들을 렌더링합니다.
- */
-function renderCityChips(countryKey, activeCityName = null) {
-  const countryData = COUNTRY_CITY_MAP[countryKey];
-  if (!countryData || !countryData.cities) return;
-
-  const html = countryData.cities.map((city, idx) => {
-    const isActive = activeCityName ? city.name === activeCityName : idx === 0;
-    return `
-      <button class="city-chip ${isActive ? 'active' : ''}" 
-              data-city="${city.name}" 
-              data-name="${city.name}" 
-              data-country="${city.country}"
-              data-lat="${city.lat}" 
-              data-lon="${city.lon}">
-        ${city.name}
-      </button>
-    `;
-  }).join('');
-
-  DOM.quickCities.innerHTML = html;
-}
-
-/**
- * 1단: 국가 탭 클릭 이벤트 (누르면 해당 국가의 도시들이 아래에 표시됨)
- */
-DOM.countryTabs.addEventListener('click', (e) => {
-  const tab = e.target.closest('.country-tab');
-  if (!tab) return;
-
-  // 탭 active 토글
-  document.querySelectorAll('.country-tab').forEach(t => t.classList.remove('active'));
-  tab.classList.add('active');
-
-  const countryKey = tab.dataset.country;
-  const countryData = COUNTRY_CITY_MAP[countryKey];
-  if (countryData && countryData.cities.length > 0) {
-    const firstCity = countryData.cities[0];
-    renderCityChips(countryKey, firstCity.name);
-    loadWeather(firstCity.lat, firstCity.lon, firstCity.name, firstCity.country);
-  }
-});
-
-/**
- * 2단: 하위 도시 칩 클릭 이벤트
- */
-DOM.quickCities.addEventListener('click', (e) => {
-  const chip = e.target.closest('.city-chip');
-  if (!chip) return;
-
-  document.querySelectorAll('.city-chip').forEach(c => c.classList.remove('active'));
-  chip.classList.add('active');
-
-  const { lat, lon, name, country } = chip.dataset;
-  loadWeather(parseFloat(lat), parseFloat(lon), name, country || '대한민국');
-});
-
-/**
  * 온도 단위 변경 토글 (°C <-> °F)
  */
 DOM.unitToggleBtn.addEventListener('click', () => {
@@ -984,16 +858,7 @@ if (DOM.modalCatalogContent) {
     const chip = e.target.closest('.catalog-city-chip');
     if (!chip) return;
 
-    const { lat, lon, name, country, countryId } = chip.dataset;
-
-    // 상단 2단 탭도 해당 국가 및 도시로 동기화
-    if (countryId && COUNTRY_CITY_MAP[countryId]) {
-      document.querySelectorAll('.country-tab').forEach(t => {
-        t.classList.toggle('active', t.dataset.country === countryId);
-      });
-      renderCityChips(countryId, name);
-    }
-
+    const { lat, lon, name, country } = chip.dataset;
     closeCitiesModal();
     loadWeather(parseFloat(lat), parseFloat(lon), name, country);
   });
@@ -1009,9 +874,6 @@ async function initApp() {
   if (window.lucide) {
     lucide.createIcons();
   }
-
-  // 초기 2단 탭 렌더링 (기본 국가: 대한민국, 기본 도시: 서울)
-  renderCityChips('kr', '서울');
 
   // 기본 도시(서울) 데이터 로드
   await loadWeather(
