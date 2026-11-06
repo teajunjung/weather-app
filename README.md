@@ -2,6 +2,8 @@
 
 별도의 API 키 발급 없이 무료로 즉시 사용할 수 있는 실시간 날씨 웹 애플리케이션입니다.
 
+👉 **배포 링크**: [https://weather-app-nu-puce-21.vercel.app](https://weather-app-nu-puce-21.vercel.app)
+
 ---
 
 ## ✨ 주요 기능
