@@ -948,6 +948,9 @@ function renderWorldCitiesCatalog() {
 function openCitiesModal() {
   renderWorldCitiesCatalog();
   DOM.cityModalOverlay.classList.remove('hidden');
+  if (window.lucide) {
+    lucide.createIcons();
+  }
 }
 
 /**
